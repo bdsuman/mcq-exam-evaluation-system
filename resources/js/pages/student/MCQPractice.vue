@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center justify-between mb-6 mt-2">
       <div class="text-[#002d45] text-[32px] font-semibold">
         {{ $t("mcq_practice") }}
       </div>
@@ -9,7 +9,7 @@
     <div v-if="loading" class="text-gray-500">{{ $t("loading") }}...</div>
     <div v-else-if="error" class="text-red-500">{{ $t(error) }}</div>
 
-    <div v-else>
+    <div class="mb-3" v-else>
       <div v-if="questions.length === 0" class="text-gray-500">{{ $t("no_questions_available") }}</div>
 
       <div v-else class="grid gap-4">

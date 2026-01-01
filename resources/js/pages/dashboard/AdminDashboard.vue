@@ -9,26 +9,6 @@
 
     <!-- Admin Dashboard Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Tasks Card -->
-      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <p class="text-gray-600 text-sm">{{ $t("total_tasks") }}</p>
-            <p class="text-3xl font-bold text-[#002d45]">{{ stats.totalTasks }}</p>
-          </div>
-          <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          </div>
-        </div>
-        <router-link
-          :to="{ name: 'TaskIndex' }"
-          class="text-blue-600 hover:text-blue-700 text-sm font-medium">
-          {{ $t("manage_tasks") }} →
-        </router-link>
-      </div>
-
       <!-- Questions Card -->
       <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <div class="flex items-center justify-between mb-4">
@@ -71,14 +51,6 @@
       <h2 class="text-xl font-bold text-[#002d45] mb-4">{{ $t("quick_actions") }}</h2>
       <div class="flex gap-4 flex-wrap">
         <router-link
-          :to="{ name: 'TaskCreate' }"
-          class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          {{ $t("add_task") }}
-        </router-link>
-        <router-link
           :to="{ name: 'QuestionCreate' }"
           class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -99,19 +71,13 @@ import { useUserStore } from "@/stores/useUserStore";
 const userStore = useUserStore();
 
 const stats = reactive({
-  totalTasks: 0,
   totalQuestions: 0,
 });
 
 const fetchStats = async () => {
   try {
-    const [tasksRes, questionsRes] = await Promise.all([
-      axios.get(route("tasks.index"), { params: { per_page: 1 } }),
-      axios.get(route("questions.index"), { params: { per_page: 1 } }),
-    ]);
-
-    stats.totalTasks = tasksRes.data?.meta?.total || 0;
-    stats.totalQuestions = questionsRes.data?.meta?.total || 0;
+    const { data } = await axios.get(route("questions.index"), { params: { per_page: 1 } });
+    stats.totalQuestions = data?.meta?.total || 0;
   } catch (error) {
     console.error("Failed to fetch stats:", error);
   }

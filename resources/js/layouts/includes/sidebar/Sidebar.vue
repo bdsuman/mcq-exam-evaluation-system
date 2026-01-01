@@ -263,11 +263,6 @@ const tabs = computed(() => {
             iconComponent: UserManagementIcon,
         });
         dynamicTabs.push({
-            label: "Task Management",
-            route: ["/tasks"],
-            iconComponent: UserManagementIcon,
-        });
-        dynamicTabs.push({
             label: "Question Management",
             route: ["/questions"],
             iconComponent: UserManagementIcon,

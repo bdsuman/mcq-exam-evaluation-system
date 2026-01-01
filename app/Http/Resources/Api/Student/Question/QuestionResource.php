@@ -17,6 +17,7 @@ class QuestionResource extends JsonResource
             'question' => $this->question,
             'type' => $this->type,
             'mark' => (float) $this->mark,
+            'is_submitted' => (bool) ($this->is_submitted ?? false),
             'options' => $this->whenLoaded('options', function () {
                 return $this->options->map(function ($option) {
                     return [

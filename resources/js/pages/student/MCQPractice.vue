@@ -19,7 +19,15 @@
           class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center justify-between"
         >
           <div class="pr-4">
-            <p class="text-xs uppercase text-gray-500">{{ formatType(question.type) }}</p>
+            <div class="flex items-center gap-2">
+              <p class="text-xs uppercase text-gray-500">{{ formatType(question.type) }}</p>
+              <span
+                v-if="question.is_submitted"
+                class="text-[11px] uppercase font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700"
+              >
+                {{ $t("submitted") }}
+              </span>
+            </div>
             <h3 class="text-lg font-semibold text-[#002d45] line-clamp-2">{{ question.question }}</h3>
             <p class="text-sm text-gray-500">{{ $t("marks") }}: {{ question.mark }}</p>
           </div>
@@ -136,7 +144,7 @@ const fetchQuestions = async () => {
 
 const openModal = async (question) => {
   activeQuestion.value = question;
-  selectedOptions.value = [];
+  selectedOptions.value = question.is_submitted ? [...(question.selected_option_ids || [])] : [];
   resultSummary.value = null;
   showModal.value = true;
 
@@ -226,6 +234,7 @@ const fetchSubmission = async (questionId) => {
   if (!questionId) return;
   try {
     const { data } = await axios.get(route("student.questions.submission", questionId));
+    if (!data.data?.is_submitted) return;
     submissions.value[questionId] = data.data;
     selectedOptions.value = data.data.selected_option_ids || [];
     resultSummary.value = {
@@ -234,9 +243,7 @@ const fetchSubmission = async (questionId) => {
       is_correct: data.data.is_correct,
     };
   } catch (e) {
-    if (e.response?.status && e.response.status !== 404) {
-      notify.error({ message: e.response?.data?.message || trans("something_went_wrong") });
-    }
+    // Silently ignore missing submissions
   }
 };
 

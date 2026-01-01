@@ -194,5 +194,6 @@
     "single_choice": "একক নির্বাচন",
     "multiple_choice": "একাধিক নির্বাচন",
     "please_select_an_option": "অনুগ্রহ করে একটি বিকল্প নির্বাচন করুন",
-    "incorrect": "ভুল"
+    "incorrect": "ভুল",
+    "submitted": "জমা হয়েছে"
 }

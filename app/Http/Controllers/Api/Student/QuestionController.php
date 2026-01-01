@@ -17,11 +17,22 @@ class QuestionController extends Controller
      */
     public function index(): JsonResponse
     {
+        $userId = request()->user()->id;
+
+        $submittedQuestionIds = QuestionSubmissionAnswer::query()
+            ->where('user_id', $userId)
+            ->pluck('question_id')
+            ->all();
+
         $questions = Question::query()
             ->where('published', true)
             ->with(['options:id,question_id,option_text,is_correct'])
             ->orderByDesc('id')
-            ->get();
+            ->get()
+            ->map(function ($question) use ($submittedQuestionIds) {
+                $question->is_submitted = in_array($question->id, $submittedQuestionIds, true);
+                return $question;
+            });
 
         return success_response(QuestionResource::collection($questions));
     }
@@ -147,11 +158,21 @@ class QuestionController extends Controller
             ->first();
 
         if (!$submission) {
-            return error_response(__('no_submission_found'), 404);
+            return success_response([
+                'question_id' => $question->id,
+                'is_submitted' => false,
+                'selected_option_ids' => [],
+                'correct_option_ids' => [],
+                'is_correct' => false,
+                'obtained_marks' => 0,
+                'total_marks' => (float) $question->mark,
+                'submitted_at' => null,
+            ]);
         }
 
         return success_response([
             'question_id' => $question->id,
+            'is_submitted' => true,
             'selected_option_ids' => $submission->selected_option_ids ?? [],
             'correct_option_ids' => $submission->correct_option_ids ?? [],
             'is_correct' => (bool) $submission->is_correct,

@@ -170,5 +170,6 @@
     "single_choice": "Single Choice",
     "multiple_choice": "Multiple Choice",
     "please_select_an_option": "Please select an option",
-    "incorrect": "Incorrect"
+    "incorrect": "Incorrect",
+    "submitted": "Submitted"
 }

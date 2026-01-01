@@ -31,6 +31,19 @@ export const useUserStore = defineStore({
             return res;
         },
 
+        async googleLogin(token, language = 'en') {
+            const res = await axios.post(route('google-login'), { token, language });
+            const tok = res.data.data.access_token;
+
+            this.setToken(tok);
+
+            if (res.data.data.user) {
+                await this.setUser(res.data.data.user);
+            }
+
+            return res;
+        },
+
         async register(fullName, email, password, passwordConfirmation) {
             const res = await axios.post(route('register'), {
                 full_name: fullName,

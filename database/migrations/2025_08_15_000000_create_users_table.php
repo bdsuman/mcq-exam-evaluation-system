@@ -3,6 +3,7 @@
 use App\Enums\UserGenderEnum;
 use App\Enums\AppLanguageEnum;
 use App\Enums\LoginTypeEnum;
+use App\Enums\UserRoleEnum;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
@@ -13,6 +14,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->enum('role', array_column(UserRoleEnum::cases(), 'value'))->default(UserRoleEnum::STUDENT->value);
             $table->string('full_name', 255);
             $table->enum('gender', array_column(UserGenderEnum::cases(), 'value'))->nullable();
             $table->date('date_of_birth')->nullable();

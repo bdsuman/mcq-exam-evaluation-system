@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register route middleware (alias → middleware class)
         $middleware->alias([
             // 'language.header' => \App\Http\Middleware\LanguageMiddleware::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
 
         // Apply LanguageMiddleware middleware to API group

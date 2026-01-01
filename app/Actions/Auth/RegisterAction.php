@@ -2,6 +2,7 @@
 
 namespace App\Actions\Auth;
 
+use App\Enums\UserRoleEnum;
 use App\DataTransferObjects\Auth\RegisterDTO;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -28,6 +29,7 @@ class RegisterAction
         $user->email = $email;
         $user->password = Hash::make($dto->password);
         $user->language = $dto->language;
+        $user->role = UserRoleEnum::STUDENT->value;
         $user->save();
 
         // Issue a Sanctum token

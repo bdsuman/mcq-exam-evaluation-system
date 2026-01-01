@@ -2,22 +2,20 @@
 
 namespace App\Models;
 
-use App\Enums\LoginTypeEnum;
 use App\Builders\UserBuilder;
 use App\Enums\UserGenderEnum;
-use App\Enums\AppLanguageEnum;
+use App\Enums\UserRoleEnum;
 use App\Traits\FirebaseNotifiable;
-use Illuminate\Support\Facades\Storage;
-use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'full_name',
@@ -29,6 +27,8 @@ class User extends Authenticatable
         'password',
         'avatar',
         'password_reset_token',
+        'language',
+        'role',
     ];
 
     protected $hidden = [
@@ -42,6 +42,7 @@ class User extends Authenticatable
         'date_of_birth' => 'date',
         'deleted_at' => 'datetime',
         'gender' => UserGenderEnum::class,
+        'role' => UserRoleEnum::class,
     ];
 
     protected static function booted()
@@ -67,6 +68,13 @@ class User extends Authenticatable
     public function newEloquentBuilder($query)
     {
         return new UserBuilder($query);
+    }
+
+    public function hasRole(string|UserRoleEnum $role): bool
+    {
+        $value = $role instanceof UserRoleEnum ? $role->value : $role;
+
+        return $this->role === $value;
     }
 
     protected $appends = ['avatar_url', 'voice_url', 'voice_cover_image_url', 'voice_description', 'cloned_voice_url'];

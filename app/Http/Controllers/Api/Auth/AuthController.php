@@ -3,21 +3,24 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Actions\Auth\ChangePasswordAction;
+use App\Actions\Auth\GoogleLoginAction;
 use App\Actions\Auth\LoginAction;
 use App\Actions\Auth\RegisterAction;
 use App\Actions\Auth\UpdateProfileAction;
 use App\DataTransferObjects\Auth\ChangePasswordDTO;
+use App\DataTransferObjects\Auth\GoogleLoginDTO;
 use App\DataTransferObjects\Auth\LoginDTO;
 use App\DataTransferObjects\Auth\RegisterDTO;
 use App\DataTransferObjects\Auth\UpdateProfileDTO;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Auth\{LoginRequest, ChangePasswordRequest, UpdateProfileRequest};
+use App\Http\Requests\Api\Auth\{LoginRequest, ChangePasswordRequest, UpdateProfileRequest, GoogleLoginRequest};
 use App\Http\Resources\Api\User\UserResource;
 use App\Models\User;
 use App\Traits\UploadAble;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Socialite\Facades\Socialite;
 
 /**
  * @group Auth
@@ -78,6 +81,65 @@ class AuthController extends Controller
         $result = $action->execute($dto);
 
         if (!$result['success']) {
+            return error_response($result['message'], 401);
+        }
+
+        return $this->respondWithToken($result['token'], $result['user']);
+    }
+
+    /**
+     * Google Login
+     *
+     * Authenticate user via Google ID token and issue access token.
+     */
+    public function googleLogin(GoogleLoginRequest $request, GoogleLoginAction $action): JsonResponse
+    {
+        $dto = new GoogleLoginDTO(
+            token: $request->input('token'),
+            language: $request->input('language'),
+        );
+
+        $result = $action->execute($dto);
+
+        if (! $result['success']) {
+            return error_response($result['message'], 401);
+        }
+
+        return $this->respondWithToken($result['token'], $result['user']);
+    }
+
+    /**
+     * Google OAuth redirect (web flow)
+     */
+    public function googleRedirect()
+    {
+        return Socialite::driver('google')->stateless()->redirect();
+    }
+
+    /**
+     * Google OAuth callback (web flow)
+     */
+    public function googleCallback(Request $request, GoogleLoginAction $action): JsonResponse
+    {
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return error_response('invalid_google_token', 401);
+        }
+
+        $token = $googleUser->token ?? null;
+        $language = $googleUser->user['locale'] ?? null;
+
+        if (! $token) {
+            return error_response('invalid_google_token', 401);
+        }
+
+        $dto = new GoogleLoginDTO(token: $token, language: $language);
+        $result = $action->execute($dto);
+
+        if (! $result['success']) {
             return error_response($result['message'], 401);
         }
 

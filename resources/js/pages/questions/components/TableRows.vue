@@ -15,7 +15,7 @@
               ? 'bg-blue-100 text-blue-800'
               : 'bg-purple-100 text-purple-800'
           ">
-          {{ formatType(item.type) }}
+          {{ $t(formatType(item.type)) }}
         </span>
       </td>
 

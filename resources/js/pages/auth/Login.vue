@@ -117,6 +117,7 @@ const googleInitialized = ref(false);
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const GOOGLE_SCRIPT_ID = "google-identity-services";
 let googleTokenClient = null;
+let googleTimeout = null;
 
 const loadGoogleScript = () => {
   return new Promise((resolve, reject) => {
@@ -137,6 +138,11 @@ const loadGoogleScript = () => {
 };
 
 const handleGoogleCallback = async (tokenResponse) => {
+  if (googleTimeout) {
+    clearTimeout(googleTimeout);
+    googleTimeout = null;
+  }
+
   const token = tokenResponse?.access_token || tokenResponse?.accessToken;
 
   if (!token) {
@@ -215,6 +221,15 @@ const startGoogleLogin = async () => {
 
   try {
     googleTokenClient.requestAccessToken({ prompt: "consent" });
+
+    // Fallback: clear loading and show error if popup is closed or callback not received
+    googleTimeout = setTimeout(() => {
+      googleLoading.value = false;
+      errorMessage.value = trans("Google login failed. Please try again.");
+      setTimeout(() => {
+        errorMessage.value = "";
+      }, 5000);
+    }, 8000);
   } catch (err) {
     console.error("Google login request failed", err);
     googleLoading.value = false;
@@ -252,6 +267,11 @@ onBeforeUnmount(() => {
     window.google?.accounts?.id?.cancel();
   } catch (_) {
     // ignore cleanup errors
+  }
+
+  if (googleTimeout) {
+    clearTimeout(googleTimeout);
+    googleTimeout = null;
   }
 });
 </script>

@@ -220,6 +220,7 @@ import LogoFull from "@/components/common/Logo.vue";
 import Tooltip from "@/layouts/includes/sidebar/Tooltip.vue";
 
 import UserManagementIcon from "@/components/icons/sidebar/UserManagementIcon.vue";
+import McqIcon from "@/components/icons/sidebar/McqIcon.vue";
 import RightArrowIcon from "@/components/icons/sidebar/RightArrowIcon.vue";
 
 import { useUserStore } from "@/stores/useUserStore";
@@ -258,14 +259,14 @@ const tabs = computed(() => {
 
     if (role === "admin") {
         dynamicTabs.push({
-            label: "Admin Dashboard",
+            label: "Dashboard",
             route: ["/"],
             iconComponent: UserManagementIcon,
         });
         dynamicTabs.push({
             label: "Question Management",
             route: ["/questions"],
-            iconComponent: UserManagementIcon,
+            iconComponent: McqIcon,
         });
     } else {
         dynamicTabs.push({
@@ -276,7 +277,7 @@ const tabs = computed(() => {
         dynamicTabs.push({
             label: "MCQ Practice",
             route: ["/mcqs"],
-            iconComponent: UserManagementIcon,
+            iconComponent: McqIcon,
         });
     }
 

@@ -10,7 +10,7 @@
       </div>
       <form
         @submit.prevent="handleSignup"
-        class="w-[400.46px] grid grid-cols-1 gap-4"
+        class="w-[400.46px] grid grid-cols-1 gap-4 max-h-[70vh] overflow-y-auto pr-1"
         autocomplete="off">
         <TextInput
           label="full_name"

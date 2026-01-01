@@ -8,19 +8,8 @@ axios.defaults.baseURL = "/api";
 axios.defaults.headers.common = { Accept: "application/json" };
 
 const loaderBlacklist = [
-    "/background-track/dropdown/genre",
-    "/background-track/dropdown/goal",
-    "/session/dropdown/type",
-    "/session/dropdown/topic",
-    "/session/dropdown/style",
-    "/session/dropdown/duration",
-    "/session/dropdown/mandatory",
-    "journal-questions/dropdown/question_option",
-    "journal-questions/dropdown/question_type",
-    "journal-questions/dropdown/topic",
     "/login",
     "/logout",
-    "background-track-title-exists"
 ];
 
 // ---- Debug flag (Vite/Webpack friendly) ----

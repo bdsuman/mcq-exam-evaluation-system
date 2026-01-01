@@ -15,23 +15,55 @@
 - [Environment Configuration](#environment-configuration)
 - [Deployment](#deployment)
 
----
 
+## 🚀 Quickstart (TL;DR)
+
+```bash
+# Copy envs
+cp .env.example .env
+
+# Boot the stack
+docker compose up -d --build
+
+# Backend deps + key + migrate/seed (inside app container)
+docker compose exec app composer install
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate --seed
+
+# Frontend deps (host or node container)
+npm install
+npm run dev
+
+# Open
+# - API/Laravel: http://localhost:8000
+# - Frontend (Vite dev): http://localhost:5173
+# - Docs (Scribe): http://localhost:8000/docs
+# - phpMyAdmin: http://localhost:8080
+```
+
+**Defaults**
+- Auth: Laravel Sanctum; use seeded admin/user accounts or create via API.
+- Language header required for API calls: `language: en` or `language: bn`.
+
+---
 ## 🎯 Project Description
 
-A modern, full-stack CRUD application built with Laravel 12 and Vue 3, following best practices and design patterns. The application is fully containerized using Docker and includes comprehensive API documentation, multilanguage support, and a robust authentication system.
+MCQ Exam Evaluation System — a modern Laravel 12 + Vue 3 platform for creating, practicing, and evaluating multiple-choice questions. It is fully containerized, multilingual (English/Bangla), and ships with production-ready auth, admin dashboards, and documented APIs.
 
-**Key Features:**
-- ✅ RESTful API with comprehensive documentation
-- ✅ Multilanguage support (English, Bangla)
-- ✅ Token-based authentication (Laravel Sanctum)
-- ✅ DTO (Data Transfer Object) + Action pattern
-- ✅ Fully Dockerized environment
-- ✅ Modern Vue 3 with Composition API
-- ✅ Form handling with VForm
-- ✅ Real-time email testing with Mailpit
-- ✅ Container log monitoring with Dozzle
-- ✅ Database management with phpMyAdmin
+**Client-Facing Highlights**
+- **Admin dashboard:** Live stats (questions, users, submissions, accuracy), quick links to profile/password, and question management.
+- **Question builder:** Create/update MCQs with single/multiple answers, marks, and publishing controls.
+- **MCQ practice:** Learners attempt questions, get instant correctness, and see obtained marks.
+- **Localization:** Seamless language switching (EN/BN) across UI and APIs.
+- **Access control:** Role-gated navigation and protected routes.
+
+**Engineering Features**
+- ✅ RESTful API with Scribe documentation
+- ✅ Laravel Sanctum authentication
+- ✅ DTO + Action patterns for clean domain logic
+- ✅ Vue 3 (Composition API) + Tailwind UI
+- ✅ VForm for resilient form UX
+- ✅ Dockerized stack (Nginx, PHP-FPM, MySQL, Redis, Vite, Mailpit, Dozzle, phpMyAdmin)
 
 ---
 

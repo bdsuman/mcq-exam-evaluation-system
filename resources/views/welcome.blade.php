@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Simple CRUD Vue</title>
+    <title>MCQ Exam Evaluation System</title>
     <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @routes

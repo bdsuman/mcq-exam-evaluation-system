@@ -18,8 +18,7 @@ class RoleMiddleware
         }
 
         $allowedRole = $role instanceof UserRoleEnum ? $role->value : $role;
-
-        if ($user->role !== $allowedRole) {
+        if ($user->role->value !== $allowedRole) {
             return error_response('forbidden', 403);
         }
 

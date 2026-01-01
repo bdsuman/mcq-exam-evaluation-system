@@ -104,5 +104,6 @@
     "success_task_completed_successfully": "Task completed successfully.",
     "success_task_uncompleted_successfully": "Task marked as not completed.",
     "task_updated": "Task updated",
-    "task_created": "Task created"
+    "task_created": "Task created",
+    "enter_password": "Enter password"
 }

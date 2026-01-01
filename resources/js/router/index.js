@@ -14,10 +14,20 @@ const routes = [
       {
         path: "/",
         name: "home",
-        component: () => import("@/pages/tasks/Index.vue"),
+        component: () => import("@/pages/dashboard/AdminDashboard.vue"),
         meta: {
           requiresAuth: true,
           title: "Home",
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/dashboard",
+        name: "dashboard",
+        component: () => import("@/pages/dashboard/UserDashboard.vue"),
+        meta: {
+          requiresAuth: true,
+          title: "Dashboard",
         },
       },
       {
@@ -86,7 +96,7 @@ const router = createRouter({
 // for authenticated routes
 router.beforeEach(async (to, from) => {
   const store = useUserStore();
-  await loadLanguageAsync(store?.language ?? "de");
+  await loadLanguageAsync(store?.language ?? "en");
 
   // Set page title
   document.title = trans(to.meta.title ?? "Deep Grow");
@@ -103,7 +113,16 @@ router.beforeEach(async (to, from) => {
     store.token != 0 &&
     to.name !== "Error"
   ) {
-    return { name: "home" };
+    // Redirect to appropriate dashboard based on role
+    if (store.user?.role === "admin") {
+      return store.user ? { name: "home" } : { name: "dashboard" };
+    }
+    return { name: "dashboard" };
+  }
+
+  // Admin-only routes check
+  if (to.meta.requiresAdmin && store.user?.role !== "admin") {
+    return { name: "dashboard" };
   }
 });
 

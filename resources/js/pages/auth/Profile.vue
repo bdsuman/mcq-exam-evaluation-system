@@ -40,7 +40,7 @@
             :placeholder="$t('Select gender')"
             optionLabel="label"
             optionValue="value"
-            endpoint="v1/admin/enums/gender"
+            endpoint="v1/enums/gender"
             :searchable="false"
             :showClear="true"
             :translateOptions="true"

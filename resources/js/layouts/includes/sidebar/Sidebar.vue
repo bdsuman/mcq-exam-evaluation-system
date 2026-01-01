@@ -272,9 +272,10 @@ const tabs = computed(() => {
 
         const role = store.user?.role;
 
-        // Hide User Management for normal users
+        // Hide Task Management and Question Management for normal users
         const isRestrictedForUserRole =
-            role === "user" && tab.label === "Task Management";
+            role === "user" && 
+            (tab.label === "Task Management" || tab.label === "Question Management");
 
         // Show Dummy Components only for dev users
         const isRestrictedForNonDev =

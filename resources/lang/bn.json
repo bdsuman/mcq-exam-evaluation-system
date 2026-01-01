@@ -163,5 +163,20 @@
     "question_is_required": "প্রশ্ন প্রয়োজন",
     "mark_is_required": "নম্বর প্রয়োজন",
     "options_are_required": "বিকল্পসমূহ প্রয়োজন",
-    "minimum_2_options_required": "সর্বনিম্ন ২টি বিকল্প প্রয়োজন"
+    "minimum_2_options_required": "সর্বনিম্ন ২টি বিকল্প প্রয়োজন",
+    "welcome": "স্বাগতম",
+    "admin_dashboard": "অ্যাডমিন ড্যাশবোর্ড - টাস্ক এবং প্রশ্ন পরিচালনা করুন",
+    "user_dashboard": "ব্যবহারকারী ড্যাশবোর্ড - আপনার অ্যাকাউন্ট",
+    "total_tasks": "মোট টাস্ক",
+    "total_questions": "মোট প্রশ্ন",
+    "manage_tasks": "টাস্ক পরিচালনা করুন",
+    "manage_questions": "প্রশ্ন পরিচালনা করুন",
+    "system_status": "সিস্টেম স্ট্যাটাস",
+    "active": "সক্রিয়",
+    "all_systems_operational": "সকল সিস্টেম চালু আছে",
+    "quick_actions": "দ্রুত পদক্ষেপ",
+    "view_profile": "প্রোফাইল দেখুন",
+    "language": "ভাষা",
+    "account_management": "অ্যাকাউন্ট ম্যানেজমেন্ট",
+    "edit_profile": "প্রোফাইল সম্পাদনা করুন"
 }

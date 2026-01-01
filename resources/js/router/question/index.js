@@ -1,9 +1,11 @@
 const AuthenticatedLayout = () => import("@/layouts/AuthenticatedLayout.vue");
+import AdminMiddleware from "@/middleware/AdminMiddleware";
 
 export default [
     {
         path: "/questions",
         component: AuthenticatedLayout,
+        beforeEnter: AdminMiddleware,
         children: [
             {
                 path: "",

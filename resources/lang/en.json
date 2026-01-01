@@ -138,5 +138,20 @@
     "question_is_required": "Question is required",
     "mark_is_required": "Mark is required",
     "options_are_required": "Options are required",
-    "minimum_2_options_required": "Minimum 2 options are required"
+    "minimum_2_options_required": "Minimum 2 options are required",
+    "welcome": "Welcome",
+    "admin_dashboard": "Admin Dashboard - Manage Tasks & Questions",
+    "user_dashboard": "User Dashboard - Your Account",
+    "total_tasks": "Total Tasks",
+    "total_questions": "Total Questions",
+    "manage_tasks": "Manage Tasks",
+    "manage_questions": "Manage Questions",
+    "system_status": "System Status",
+    "active": "Active",
+    "all_systems_operational": "All systems are operational",
+    "quick_actions": "Quick Actions",
+    "view_profile": "View Profile",
+    "language": "Language",
+    "account_management": "Account Management",
+    "edit_profile": "Edit Profile"
 }

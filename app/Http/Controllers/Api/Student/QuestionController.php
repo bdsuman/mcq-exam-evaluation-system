@@ -6,8 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Student\SubmitAnswersRequest;
 use App\Http\Resources\Api\Student\Question\QuestionResource;
 use App\Models\Question;
+use App\Models\QuestionSubmission;
+use App\Models\QuestionSubmissionAnswer;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 
 class QuestionController extends Controller
 {
@@ -31,6 +32,19 @@ class QuestionController extends Controller
     public function submit(SubmitAnswersRequest $request): JsonResponse
     {
         $responses = collect($request->validated('responses'));
+        $userId = $request->user()->id;
+
+        $questionIds = $responses->pluck('question_id');
+
+        $alreadySubmitted = QuestionSubmissionAnswer::query()
+            ->where('user_id', $userId)
+            ->whereIn('question_id', $questionIds)
+            ->pluck('question_id')
+            ->all();
+
+        if (!empty($alreadySubmitted)) {
+            return error_response(__('already_submitted'), 422);
+        }
 
         // Fetch all relevant questions with options
         $questions = Question::query()
@@ -81,11 +95,37 @@ class QuestionController extends Controller
             $details[] = [
                 'question_id' => $questionId,
                 'mark' => (float) $question->mark,
-                'selected_option_ids' => $selectedOptionIds,
-                'correct_option_ids' => $correctOptionIds,
+                'selected_option_ids' => $selectedOptionIds->values()->all(),
+                'correct_option_ids' => $correctOptionIds->values()->all(),
                 'is_correct' => $isCorrect,
             ];
         }
+
+        // Persist submission summary
+        QuestionSubmission::create([
+            'user_id' => $userId,
+            'total_marks' => $totalMarks,
+            'obtained_marks' => $obtainedMarks,
+            'questions_answered' => $responses->count(),
+            'correct_answers' => $correctCount,
+        ]);
+
+        // Persist per-question answers for review
+        $now = now();
+
+        QuestionSubmissionAnswer::insert(collect($details)->map(function (array $detail) use ($userId, $now) {
+            return [
+                'user_id' => $userId,
+                'question_id' => $detail['question_id'],
+                'selected_option_ids' => json_encode($detail['selected_option_ids']),
+                'correct_option_ids' => json_encode($detail['correct_option_ids']),
+                'mark' => $detail['mark'],
+                'obtained_marks' => $detail['is_correct'] ? $detail['mark'] : 0,
+                'is_correct' => $detail['is_correct'],
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        })->all());
 
         return success_response([
             'total_marks' => $totalMarks,
@@ -93,6 +133,31 @@ class QuestionController extends Controller
             'questions_answered' => $responses->count(),
             'correct_answers' => $correctCount,
             'details' => $details,
+        ]);
+    }
+
+    /**
+     * Show a student's existing submission for a question.
+     */
+    public function submission(Question $question): JsonResponse
+    {
+        $submission = QuestionSubmissionAnswer::query()
+            ->where('user_id', request()->user()->id)
+            ->where('question_id', $question->id)
+            ->first();
+
+        if (!$submission) {
+            return error_response(__('no_submission_found'), 404);
+        }
+
+        return success_response([
+            'question_id' => $question->id,
+            'selected_option_ids' => $submission->selected_option_ids ?? [],
+            'correct_option_ids' => $submission->correct_option_ids ?? [],
+            'is_correct' => (bool) $submission->is_correct,
+            'obtained_marks' => (float) $submission->obtained_marks,
+            'total_marks' => (float) $submission->mark,
+            'submitted_at' => $submission->created_at,
         ]);
     }
 }

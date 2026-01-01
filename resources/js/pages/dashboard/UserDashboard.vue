@@ -58,6 +58,29 @@
           </div>
         </div>
       </div>
+
+      <!-- MCQ Stats Card -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="text-gray-600 text-sm">{{ $t("mcq_practice") }}</p>
+            <p class="text-2xl font-bold text-[#002d45]">{{ stats.attempts }}</p>
+            <p class="text-sm text-gray-500 mt-1">
+              {{ $t("obtained_marks") }}: {{ stats.obtained_marks }} / {{ stats.total_marks }}
+            </p>
+          </div>
+          <div class="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <router-link
+          :to="{ name: 'StudentMCQ' }"
+          class="text-teal-600 hover:text-teal-700 text-sm font-medium">
+          {{ $t("mcq_practice") }} →
+        </router-link>
+      </div>
     </div>
 
     <!-- Account Management Section -->
@@ -87,6 +110,27 @@
 
 <script setup>
 import { useUserStore } from "@/stores/useUserStore";
+import axios from "axios";
+import { onMounted, reactive } from "vue";
 
 const userStore = useUserStore();
+
+const stats = reactive({
+  attempts: 0,
+  obtained_marks: 0,
+  total_marks: 0,
+});
+
+const fetchStats = async () => {
+  try {
+    const { data } = await axios.get(route("student.questions.stats"));
+    stats.attempts = data.data?.attempts ?? 0;
+    stats.obtained_marks = data.data?.obtained_marks ?? 0;
+    stats.total_marks = data.data?.total_marks ?? 0;
+  } catch (error) {
+    // silent fail on dashboard widget
+  }
+};
+
+onMounted(fetchStats);
 </script>

@@ -188,6 +188,8 @@
     "marks": "নম্বর",
     "total_marks": "মোট নম্বর",
     "obtained_marks": "প্রাপ্ত নম্বর",
+    "already_submitted": "আপনি ইতিমধ্যেই এই প্রশ্ন জমা দিয়েছেন",
+    "no_submission_found": "কোনো জমা পাওয়া যায়নি",
     "loading": "লোড হচ্ছে",
     "single_choice": "একক নির্বাচন",
     "multiple_choice": "একাধিক নির্বাচন",

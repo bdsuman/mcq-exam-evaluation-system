@@ -250,42 +250,46 @@ const restrictedRoutes = restrictedModules.flatMap(
     (module) => restrictedRoutesMap[module] || []
 );
 
-const allTabs = [
-    {
-        label: "Task Management",
-        route: ["/", "/tasks"],
-        iconComponent: UserManagementIcon,
-    },
-    {
-        label: "Question Management",
-        route: ["/questions"],
-        iconComponent: UserManagementIcon,
-    }
-];
-
-// Filter tabs based on restrictedRoutes and role
+// Build tabs dynamically based on role
 const tabs = computed(() => {
-    return allTabs.filter((tab) => {
+    const role = store.user?.role;
+
+    const dynamicTabs = [];
+
+    if (role === "admin") {
+        dynamicTabs.push({
+            label: "Admin Dashboard",
+            route: ["/"],
+            iconComponent: UserManagementIcon,
+        });
+        dynamicTabs.push({
+            label: "Task Management",
+            route: ["/tasks"],
+            iconComponent: UserManagementIcon,
+        });
+        dynamicTabs.push({
+            label: "Question Management",
+            route: ["/questions"],
+            iconComponent: UserManagementIcon,
+        });
+    } else {
+        dynamicTabs.push({
+            label: "Dashboard",
+            route: ["/dashboard"],
+            iconComponent: UserManagementIcon,
+        });
+    }
+
+    return dynamicTabs.filter((tab) => {
         const isRouteRestricted = tab.route.some((r) =>
             restrictedRoutes.includes(r)
         );
-
-        const role = store.user?.role;
-
-        // Hide Task Management and Question Management for normal users
-        const isRestrictedForUserRole =
-            role === "user" && 
-            (tab.label === "Task Management" || tab.label === "Question Management");
 
         // Show Dummy Components only for dev users
         const isRestrictedForNonDev =
             tab.label === "Dummy Components" && role !== "dev";
 
-        return (
-            !isRouteRestricted &&
-            !isRestrictedForUserRole &&
-            !isRestrictedForNonDev
-        );
+        return !isRouteRestricted && !isRestrictedForNonDev;
     });
 });
 

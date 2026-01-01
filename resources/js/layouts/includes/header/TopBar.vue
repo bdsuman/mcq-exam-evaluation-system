@@ -72,24 +72,6 @@
                         class="absolute right-0 top-[calc(100%+10px)] min-w-[220px] z-20 rounded-xl bg-gradient-to-b from-[#005766] to-[#3ab57c] backdrop-blur shadow-lg overflow-hidden"
                     >
                         <ul>
-                            <li>
-                                <router-link
-                                    to="/profile"
-                                    class="block px-4 py-2 text-sm text-white/90 hover:text-white hover:bg-white/10"
-                                    @click="closeUserMenu"
-                                >
-                                    {{ $t("Profile update") }}
-                                </router-link>
-                            </li>
-                            <li>
-                                <router-link
-                                    to="/change-password"
-                                    class="block px-4 py-2 text-sm text-white/90 hover:text-white hover:bg-white/10"
-                                    @click="closeUserMenu"
-                                >
-                                    {{ $t("Change Password") }}
-                                </router-link>
-                            </li>
                             <!-- <li
                                 class="px-3 border-t border-white flex items-center hover:bg-white/10"
                             > -->
@@ -99,7 +81,7 @@
                                 <span
                                     class="text-sm text-white/90"
                                 >
-                                    {{ $t("Change Language") }}:
+                                    {{ $t("Language") }}:
                                 </span>
                                 <LangSelect :sidebarCollapse="false" />
                             </li>

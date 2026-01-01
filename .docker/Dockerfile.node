@@ -1,0 +1,17 @@
+FROM node:22-alpine
+
+USER root
+WORKDIR /var/www/html
+
+# Install dependencies
+RUN apk add --no-cache git
+
+# Create node user directories
+RUN mkdir -p /var/www/html/node_modules && \
+    chown -R node:node /var/www/html
+
+USER node
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev"]

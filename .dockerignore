@@ -1,0 +1,72 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github
+
+# Documentation
+README.md
+*.md
+
+# IDE
+.vscode
+.idea
+.fleet
+.nova
+.zed
+.phpactor.json
+
+# Node modules (we build assets first, then include built files only)
+node_modules
+
+# Environment files (handled separately in deployment)
+.env
+.env.*
+!.env.example
+
+# Test files
+tests
+phpunit.xml
+.phpunit.cache
+.phpunit.result.cache
+
+# Development files
+Homestead.json
+Homestead.yaml
+auth.json
+
+# Logs
+*.log
+storage/logs/*
+
+# Temporary files
+.DS_Store
+Thumbs.db
+
+# Build artifacts that will be generated
+/vendor
+!/public
+!/public/build
+
+# Docker files (not needed in image)
+docker-compose*.yml
+.docker/docker-compose*.yml
+.docker/Dockerfile*
+.docker/README.md
+.docker/*.md
+.docker/certs/
+.docker/haproxy/
+.docker/pgpool/
+.docker/pgsql/
+.docker/prometheus/
+.docker/worker/
+.docker/node/
+!.docker/supervisor/
+!.docker/nginx/
+!.docker/php/
+
+# Other
+/public/hot
+thunder-tests

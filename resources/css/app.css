@@ -1,0 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* 1) Load Tailwind */
+@import 'tailwindcss';
+
+/* 2) Tell Tailwind where to scan for classes (v4 replaces content[] with @source) */
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source './resources/**/*.vue';
+@source './resources/**/*.js';
+
+/* 3) Design tokens (v4): colors & spacing become CSS variables */
+@theme {
+    /* Typography */
+    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    /* Colors -> gives you bg-*, text-*, border-* utilities automatically */
+    --color-primary: #005766;
+    --color-primary-hover: #8BEE82;
+    --color-secondary: #005766;
+    --color-secondary-hover: #A855F7;
+    --color-accent: #FBBF24;
+    --color-neutral: #64748B;
+    --color-base-100: #FFFFFF;
+    --color-base-200: #F9FAFB;
+    --color-base-300: #D1D5DB;
+    --color-info: #3ABFF8;
+    --color-success: #36D399;
+    --color-warning: #FBBD23;
+    --color-error: #F87272;
+
+    /* Your custom layout colors */
+    --color-header: #1D4ED8;
+    --color-sidebar: #004036;
+    --color-aside: #F9FAFB;
+    --color-main: #FFFFFF;
+    --color-body: #F3F6FA;
+    /* ← now `bg-body` works */
+
+    /* Spacing tokens (replace v3 margin/width keys) */
+    --spacing-header: 91px;
+    --spacing-aside: 332px;
+    --spacing-aside-collapsed: 84px;
+}
+
+/* 4) Plugins (v4): register in CSS */
+@plugin '@tailwindcss/forms';
+
+@layer base {
+    html {
+        font-family: var(--font-sans);
+    }
+
+    tbody>tr {
+        @apply bg-white rounded-xl break-words;
+    }
+
+    tbody>tr>td {
+        @apply h-[56px] px-4 py-2 text-sm;
+    }
+}
+
+/* global (NOT scoped) */
+.table-scroller {
+    --sb-track: #eef2f7;
+    --sb-thumb: #005766;
+    --sb-thumb-hover: #004652;
+    scrollbar-width: thin;
+    /* Firefox */
+    scrollbar-color: var(--sb-thumb) var(--sb-track);
+    /* Firefox */
+}
+
+/* WebKit (Chrome/Edge/Safari) */
+.table-scroller::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.table-scroller::-webkit-scrollbar-track {
+    background: var(--sb-track);
+    border-radius: 999px;
+}
+
+.table-scroller::-webkit-scrollbar-thumb {
+    background: var(--sb-thumb);
+    border-radius: 999px;
+    border: 2px solid var(--sb-track);
+}
+
+.table-scroller::-webkit-scrollbar-thumb:hover {
+    background: var(--sb-thumb-hover);
+}
+
+/* 🔕 Hide the arrow buttons thoroughly */
+.table-scroller::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+    background: transparent;
+}
+
+.table-scroller::-webkit-scrollbar-button:single-button {
+    display: none;
+    width: 0;
+    height: 0;
+    background: transparent;
+}
+
+/* Extra specificity for some builds */
+.table-scroller::-webkit-scrollbar-button:vertical:decrement,
+.table-scroller::-webkit-scrollbar-button:vertical:increment,
+.table-scroller::-webkit-scrollbar-button:horizontal:decrement,
+.table-scroller::-webkit-scrollbar-button:horizontal:increment {
+    display: none;
+    width: 0;
+    height: 0;
+    background: transparent;
+}
+
+/* PrimeVue custom styles here */
+/* Dropdown */
+.p-select {
+    background-color: #F3F6FA !important;
+    border: 0 !important;
+    border-radius: 16px !important;
+}
+
+.p-select-label {
+    color: #7b7e7d !important;
+    font-size: 14px !important;
+}
+
+.p-select-label.p-placeholder {
+    color: #7b7e7d !important;
+}
+
+.p-select-clear-icon {
+    color: #5D5D5D !important;
+    margin-right: 10px;
+    width: 12px !important;
+}
+
+.p-select-dropdown {
+    color: #005766 !important;
+}
+
+/* Multiselect */
+.p-multiselect {
+    background-color: #F3F6FA !important;
+    border: 0 !important;
+    border-radius: 16px !important;
+}
+
+.p-multiselect-label {
+    color: #7b7e7d !important;
+    font-size: 14px !important;
+}
+
+.p-multiselect-label.p-placeholder {
+    color: #7b7e7d !important;
+}
+
+.p-multiselect-dropdown {
+    color: #005766 !important;
+}
+
+.p-select.p-disabled {
+    pointer-events: none;
+    opacity: 0.5;
+    background-color: rgba(245, 245, 245, 0.5) !important;
+}
+
+.p-inputtext:enabled {
+    border-radius: 0 !important;
+}
+
+.p-select-overlay {
+    margin-top: 10px !important;
+    border-radius: 16px !important;
+}
+
+.p-select-option {
+    font-size: 14px !important;
+    color: #5D5D5D !important;
+    height: 48px !important;
+    border-radius: 16px !important;
+}
+
+.p-select-option:hover {
+    background-color: #C1FDDA !important;
+}
+
+.p-select-option.p-select-option-selected {
+    background-color: #C1FDDA !important;
+}
+
+.p-multiselect-option {
+    font-size: 14px !important;
+    color: #5D5D5D !important;
+    height: 48px !important;
+    border-radius: 16px !important;
+}
+
+.p-multiselect-option:hover {
+    background-color: #C1FDDA !important;
+}
+
+.p-multiselect-option.p-multiselect-option-selected {
+    background-color: #C1FDDA !important;
+}
+
+.p-multiselect-overlay {
+    margin-top: 10px !important;
+    border-radius: 16px !important;
+}
+
+.p-iconfield .p-inputtext:not(:last-child) {
+    border-radius: 16px !important;
+}
+
+.p-checkbox-box {
+    border-radius: 6px !important;
+}
+
+.p-checkbox-checked .p-checkbox-box {
+    background-color: #005766 !important;
+    border: none !important;
+    border-radius: 6px !important;
+}
+
+.form-row-grid {
+    @apply grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mb-4 w-full;
+}
+
+/* Chrome, Safari, Edge */
+input[type="search"]::-webkit-search-cancel-button {
+    cursor: pointer;
+}
+
+/* Firefox */
+input[type="search"]::-moz-search-clear {
+    cursor: pointer;
+}
+
+input.p-inputtext.p-component.p-select-filter {
+    border-radius: 8px !important;
+}
+
+.p-inputtext:enabled {
+    border: 0 !important;
+    font-size: 14px;
+    color: #7b7e7d !important;
+}
+
+.p-inputtext::placeholder {
+    color: #7b7e7d !important;
+    font-size: 14px !important;
+}
+
+.p-inputtext:enabled:focus {
+    border-bottom: 1px solid #F3F6FA !important;
+}

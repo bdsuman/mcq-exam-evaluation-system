@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1000" height="600" viewBox="0 0 1000 600"
+     role="img" aria-label="Flag of Bangladesh">
+  <title>Flag of Bangladesh</title>
+
+  <!-- Background (bottle green) -->
+  <rect x="0" y="0" width="1000" height="600" fill="#006747"/>
+
+  <!-- Red disk: radius = length/5 = 1000/5 = 200
+       center x = 9/20 * length = 9/20 * 1000 = 450
+       center y = height/2 = 300 -->
+  <circle cx="450" cy="300" r="200" fill="#DA291C"/>
+</svg>

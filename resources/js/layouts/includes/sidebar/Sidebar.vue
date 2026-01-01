@@ -256,6 +256,11 @@ const allTabs = [
         route: ["/", "/tasks"],
         iconComponent: UserManagementIcon,
     },
+    {
+        label: "Question Management",
+        route: ["/questions"],
+        iconComponent: UserManagementIcon,
+    }
 ];
 
 // Filter tabs based on restrictedRoutes and role

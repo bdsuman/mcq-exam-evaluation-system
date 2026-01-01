@@ -2,6 +2,7 @@ import { createWebHistory, createRouter } from "vue-router";
 import { trans, loadLanguageAsync } from "laravel-vue-i18n";
 import { useUserStore } from "@/stores/useUserStore";
 import task from "./task";
+import question from "./question";
 
 const AuthenticatedLayout = () => import("@/layouts/AuthenticatedLayout.vue");
 
@@ -40,6 +41,7 @@ const routes = [
     ],
   },
   ...task,
+  ...question,
   {
     path: "/login",
     name: "login",

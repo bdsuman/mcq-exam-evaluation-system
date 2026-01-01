@@ -1,6 +1,11 @@
 <template>
-    <div :class="readonly ? 'pointer-events-none' : 'cursor-pointer'" @click="toggle">
-        <ToggleSwitchIcon :isOn="modelValue" />
+    <div class="flex items-center gap-3">
+        <div :class="readonly ? 'pointer-events-none' : 'cursor-pointer'" @click="toggle">
+            <ToggleSwitchIcon :isOn="modelValue" />
+        </div>
+        <label v-if="label" class="text-sm font-medium text-[#002d45] cursor-pointer" @click="toggle">
+            {{ label }}
+        </label>
     </div>
 </template>
 
@@ -15,6 +20,10 @@ const props = defineProps({
     readonly: {
         type: Boolean,
         default: false,
+    },
+    label: {
+        type: String,
+        default: null,
     },
 });
 

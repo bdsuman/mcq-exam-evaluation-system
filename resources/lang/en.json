@@ -154,5 +154,18 @@
     "language": "Language",
     "account_management": "Account Management",
     "edit_profile": "Edit Profile",
-    "Language": "Language"
+    "Language": "Language",
+    "mcq_practice": "MCQ Practice",
+    "no_questions_available": "No questions available",
+    "submission_successful": "Submission successful",
+    "result": "Result",
+    "correct_answers": "Correct answers",
+    "marks": "Marks",
+    "total_marks": "Total marks",
+    "obtained_marks": "Obtained marks",
+    "loading": "Loading",
+    "single_choice": "Single Choice",
+    "multiple_choice": "Multiple Choice",
+    "please_select_an_option": "Please select an option",
+    "incorrect": "Incorrect"
 }

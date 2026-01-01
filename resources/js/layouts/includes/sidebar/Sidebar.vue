@@ -278,6 +278,11 @@ const tabs = computed(() => {
             route: ["/dashboard"],
             iconComponent: UserManagementIcon,
         });
+        dynamicTabs.push({
+            label: "MCQ Practice",
+            route: ["/mcqs"],
+            iconComponent: UserManagementIcon,
+        });
     }
 
     return dynamicTabs.filter((tab) => {

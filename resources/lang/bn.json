@@ -179,5 +179,18 @@
     "language": "ভাষা",
     "account_management": "অ্যাকাউন্ট ম্যানেজমেন্ট",
     "edit_profile": "প্রোফাইল সম্পাদনা করুন",
-    "Language": "ভাষা"
+    "Language": "ভাষা",
+    "mcq_practice": "এমসিকিউ অনুশীলন",
+    "no_questions_available": "কোনো প্রশ্ন উপলব্ধ নেই",
+    "submission_successful": "জমা সফল হয়েছে",
+    "result": "ফলাফল",
+    "correct_answers": "সঠিক উত্তর",
+    "marks": "নম্বর",
+    "total_marks": "মোট নম্বর",
+    "obtained_marks": "প্রাপ্ত নম্বর",
+    "loading": "লোড হচ্ছে",
+    "single_choice": "একক নির্বাচন",
+    "multiple_choice": "একাধিক নির্বাচন",
+    "please_select_an_option": "অনুগ্রহ করে একটি বিকল্প নির্বাচন করুন",
+    "incorrect": "ভুল"
 }

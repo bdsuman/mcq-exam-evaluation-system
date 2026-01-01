@@ -3,6 +3,7 @@ import { trans, loadLanguageAsync } from "laravel-vue-i18n";
 import { useUserStore } from "@/stores/useUserStore";
 import task from "./task";
 import question from "./question";
+import student from "./student";
 
 const AuthenticatedLayout = () => import("@/layouts/AuthenticatedLayout.vue");
 
@@ -52,6 +53,7 @@ const routes = [
   },
   ...task,
   ...question,
+  ...student,
   {
     path: "/login",
     name: "login",

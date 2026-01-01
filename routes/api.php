@@ -23,11 +23,9 @@ Route::prefix('v1')->group(function () {
         require __DIR__ . '/api/v1/admin/questions.php';
     });
 
-    // // Student routes
-    // Route::middleware(['auth:sanctum', 'role:student'])->prefix('student')->group(function () {
-    //     require __DIR__ . '/api/v1/student/auth.php';
-    //     require __DIR__ . '/api/v1/student/tasks.php';
-    //     require __DIR__ . '/api/v1/student/enum.php';
-    // });
+    // Student routes
+    Route::middleware(['auth:sanctum', 'role:student'])->prefix('student')->group(function () {
+        require __DIR__ . '/api/v1/student/questions.php';
+    });
 });
 

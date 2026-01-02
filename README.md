@@ -14,6 +14,9 @@
 - [Development Workflow](#development-workflow)
 - [Environment Configuration](#environment-configuration)
 - [Deployment](#deployment)
+- [Assumptions](#assumptions)
+- [Extra Improvements & Enhancements](#extra-improvements--enhancements)
+- [Code Quality & Standards](#code-quality--standards)
 
 
 ## 🚀 Quickstart (TL;DR)
@@ -845,7 +848,92 @@ Token-based authentication using Laravel Sanctum:
 ],
 ```
 
-#### 2. **Authentication Flow**
+#### 2. **Google OAuth Authentication**
+
+The system supports Google OAuth for seamless user registration and login:
+
+**Features:**
+- One-click Google sign-in
+- Auto-registration for new users
+- Avatar import from Google profile
+- Automatic student role assignment
+
+**Implementation:**
+
+```php
+// app/Actions/Auth/GoogleLoginAction.php
+public function execute(GoogleLoginDTO $dto): array
+{
+    // Get user from Google OAuth token
+    $googleUser = Socialite::driver('google')->stateless()->userFromToken($dto->token);
+    
+    $email = Str::lower($googleUser->getEmail() ?? '');
+    
+    // Find or create user
+    $user = User::where('email', $email)->first();
+    
+    if (!$user) {
+        // Auto-register new user
+        $user = User::create([
+            'full_name' => $googleUser->getName(),
+            'email' => $email,
+            'language' => $dto->language ?? 'en',
+            'avatar' => $googleUser->getAvatar(),
+            'role' => UserRoleEnum::STUDENT->value,
+        ]);
+    }
+    
+    // Generate Sanctum token
+    $token = $user->createToken('google-auth')->plainTextToken;
+    
+    return [
+        'success' => true,
+        'access_token' => $token,
+        'user' => $user,
+    ];
+}
+```
+
+**Frontend Integration:**
+
+```javascript
+// Google Sign-In Button
+const handleGoogleLogin = async (googleToken) => {
+    try {
+        const response = await axios.post('/v1/admin/google-login', {
+            token: googleToken,
+            language: localStorage.getItem('language') || 'en'
+        });
+        
+        const { access_token, user } = response.data.data;
+        
+        // Store token
+        localStorage.setItem('token', access_token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+        
+        // Navigate to dashboard
+        router.push('/dashboard');
+    } catch (error) {
+        // Handle error (invalid token, etc.)
+    }
+};
+```
+
+**Configuration (.env):**
+
+```env
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
+```
+
+**Benefits:**
+- No password management for users
+- Faster onboarding
+- Reduced friction in registration
+- Trust via Google identity
+
+#### 3. **Traditional Authentication Flow**
 
 ```php
 // Login
@@ -934,6 +1022,307 @@ router.beforeEach((to, from, next) => {
     }
 });
 ```
+
+---
+
+## 🎓 MCQ Evaluation Logic
+
+### Overview
+
+The system uses a strict evaluation algorithm for MCQ submissions:
+
+**Evaluation Rules:**
+1. **Exact Match Required:** All selected options must be correct AND all correct options must be selected
+2. **No Partial Credit:** Either full marks or zero marks
+3. **Single Submission:** Each question can only be answered once
+4. **Published Only:** Only published questions are evaluated
+5. **Option Validation:** Only options belonging to the question are counted
+
+### Evaluation Algorithm
+
+```php
+// app/Http/Controllers/Api/Student/QuestionController.php
+public function submit(SubmitAnswersRequest $request): JsonResponse
+{
+    $responses = collect($request->validated('responses'));
+    $userId = $request->user()->id;
+    
+    // Fetch questions with their correct answers
+    $questions = Question::query()
+        ->whereIn('id', $responses->pluck('question_id'))
+        ->where('published', true)
+        ->with('options:id,question_id,is_correct')
+        ->get()
+        ->keyBy('id');
+    
+    $totalMarks = 0;
+    $obtainedMarks = 0;
+    $correctCount = 0;
+    
+    foreach ($responses as $response) {
+        $questionId = $response['question_id'];
+        $selectedOptionIds = collect($response['option_ids'])->unique()->values();
+        $question = $questions->get($questionId);
+        
+        // Get correct answer(s)
+        $correctOptionIds = $question->options
+            ->where('is_correct', true)
+            ->pluck('id')
+            ->values();
+        
+        $totalMarks += (float) $question->mark;
+        
+        // Award marks only if:
+        // 1. Student selected at least one option
+        // 2. All selected options are correct
+        // 3. All correct options were selected (exact match)
+        $isCorrect = $correctOptionIds->isNotEmpty()
+            && $selectedOptionIds->isNotEmpty()
+            && $selectedOptionIds->diff($correctOptionIds)->isEmpty()
+            && $correctOptionIds->diff($selectedOptionIds)->isEmpty();
+        
+        if ($isCorrect) {
+            $obtainedMarks += (float) $question->mark;
+            $correctCount++;
+        }
+    }
+    
+    // Store submission record
+    QuestionSubmission::create([
+        'user_id' => $userId,
+        'total_marks' => $totalMarks,
+        'obtained_marks' => $obtainedMarks,
+        'questions_answered' => $responses->count(),
+        'correct_answers' => $correctCount,
+    ]);
+    
+    return success_response([
+        'total_marks' => $totalMarks,
+        'obtained_marks' => $obtainedMarks,
+        'questions_answered' => $responses->count(),
+        'correct_answers' => $correctCount,
+    ]);
+}
+```
+
+### Scoring Examples
+
+#### Example 1: Single Correct Answer
+```json
+{
+  "question": "What is 2 + 2?",
+  "mark": 5,
+  "options": [
+    {"id": 1, "text": "3", "is_correct": false},
+    {"id": 2, "text": "4", "is_correct": true},
+    {"id": 3, "text": "5", "is_correct": false}
+  ]
+}
+
+// Submission
+{
+  "question_id": 1,
+  "option_ids": [2]
+}
+
+// Result: ✅ Correct (5 marks)
+// Reason: Selected option 2 (correct), which matches all correct answers
+```
+
+#### Example 2: Multiple Correct Answers
+```json
+{
+  "question": "Which are programming languages?",
+  "mark": 10,
+  "options": [
+    {"id": 1, "text": "Python", "is_correct": true},
+    {"id": 2, "text": "HTML", "is_correct": false},
+    {"id": 3, "text": "JavaScript", "is_correct": true},
+    {"id": 4, "text": "CSS", "is_correct": false}
+  ]
+}
+
+// Case A: All correct selected
+{
+  "question_id": 2,
+  "option_ids": [1, 3]
+}
+// Result: ✅ Correct (10 marks)
+
+// Case B: Only one correct selected
+{
+  "question_id": 2,
+  "option_ids": [1]
+}
+// Result: ❌ Wrong (0 marks)
+// Reason: Missing option 3 (JavaScript)
+
+// Case C: All correct + one wrong selected
+{
+  "question_id": 2,
+  "option_ids": [1, 2, 3]
+}
+// Result: ❌ Wrong (0 marks)
+// Reason: Option 2 (HTML) is incorrect
+```
+
+#### Example 3: Invalid Submissions
+```json
+// Case A: No options selected
+{
+  "question_id": 3,
+  "option_ids": []
+}
+// Result: ❌ Wrong (0 marks)
+// Reason: No options selected
+
+// Case B: Invalid option ID
+{
+  "question_id": 3,
+  "option_ids": [999]
+}
+// Result: ❌ Wrong (0 marks)
+// Reason: Option doesn't belong to this question
+```
+
+### Submission Response Format
+
+```json
+{
+  "success": true,
+  "message": "success",
+  "data": {
+    "total_marks": 25,
+    "obtained_marks": 15,
+    "questions_answered": 5,
+    "correct_answers": 3,
+    "details": [
+      {
+        "question_id": 1,
+        "mark": 5,
+        "selected_option_ids": [2],
+        "correct_option_ids": [2],
+        "is_correct": true
+      },
+      {
+        "question_id": 2,
+        "mark": 10,
+        "selected_option_ids": [1],
+        "correct_option_ids": [1, 3],
+        "is_correct": false
+      }
+    ]
+  }
+}
+```
+
+### Duplicate Submission Prevention
+
+```php
+// Check if questions already submitted
+$alreadySubmitted = QuestionSubmissionAnswer::query()
+    ->where('user_id', $userId)
+    ->whereIn('question_id', $questionIds)
+    ->pluck('question_id')
+    ->all();
+
+if (!empty($alreadySubmitted)) {
+    return error_response(__('already_submitted'), 422);
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "message": "already_submitted",
+  "data": []
+}
+```
+
+### Database Schema
+
+**question_submissions** table (session-level summary):
+```php
+Schema::create('question_submissions', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+    $table->decimal('total_marks', 8, 2);
+    $table->decimal('obtained_marks', 8, 2);
+    $table->integer('questions_answered');
+    $table->integer('correct_answers');
+    $table->timestamps();
+});
+```
+
+**question_submission_answers** table (per-question details):
+```php
+Schema::create('question_submission_answers', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+    $table->foreignId('question_id')->constrained()->cascadeOnDelete();
+    $table->json('selected_option_ids');
+    $table->json('correct_option_ids');
+    $table->decimal('mark', 8, 2);
+    $table->decimal('obtained_marks', 8, 2);
+    $table->boolean('is_correct');
+    $table->timestamps();
+    
+    // Prevent duplicate submissions
+    $table->unique(['user_id', 'question_id']);
+});
+```
+
+### Frontend Submission Example
+
+```javascript
+// Submit answers
+const submitAnswers = async () => {
+    try {
+        const response = await axios.post('/v1/student/questions/submit', {
+            responses: [
+                {
+                    question_id: 1,
+                    option_ids: [2] // Single answer
+                },
+                {
+                    question_id: 2,
+                    option_ids: [1, 3] // Multiple answers
+                }
+            ]
+        });
+        
+        const result = response.data.data;
+        
+        console.log(`Score: ${result.obtained_marks}/${result.total_marks}`);
+        console.log(`Correct: ${result.correct_answers}/${result.questions_answered}`);
+        
+        // Show detailed results
+        result.details.forEach(detail => {
+            if (detail.is_correct) {
+                console.log(`✅ Question ${detail.question_id}: Correct (+${detail.mark} marks)`);
+            } else {
+                console.log(`❌ Question ${detail.question_id}: Wrong (0 marks)`);
+                console.log(`   Selected: [${detail.selected_option_ids}]`);
+                console.log(`   Correct: [${detail.correct_option_ids}]`);
+            }
+        });
+    } catch (error) {
+        if (error.response?.data?.message === 'already_submitted') {
+            alert('You have already answered these questions!');
+        }
+    }
+};
+```
+
+### Key Features
+
+✅ **Strict Evaluation** - No partial credit, exact match required
+✅ **Duplicate Prevention** - Each question answered only once
+✅ **Instant Feedback** - Immediate results with detailed breakdown
+✅ **Immutable Submissions** - Cannot edit after submission
+✅ **Comprehensive Tracking** - Both summary and per-question records
+✅ **Validation** - Only valid options from published questions accepted
 
 ---
 
@@ -1178,67 +1567,491 @@ Modify `docker-compose.yml` for production:
 
 ---
 
-## 📝 Additional Notes
+## 🎯 Assumptions
 
-### Helper Functions
+The following assumptions guide the architecture and implementation of this project:
 
+### User Assumptions
+
+1. **Admin User Profile Completeness**
+   - Assumption: Admins must have complete profiles (full_name, gender, date_of_birth)
+   - This is enforced by `isProfileSetupCompleted()` method in User model
+   - Used to track profile readiness before certain operations
+
+2. **Language Header Requirement**
+   - Assumption: All API requests are multilingual-aware
+   - Clients MUST provide `language: en` or `language: bn` header
+   - Without header, requests fail with 422 status code
+   - This enables seamless translation at the API level
+
+3. **File Storage Strategy**
+   - Assumption: File uploads may use different storage backends (local, S3, exoscale)
+   - URL generation is adaptive based on `filesystems.default` config
+   - Production deployments may switch storage providers without code changes
+
+4. **Authentication State**
+   - Assumption: Tokens don't expire (Sanctum configured with `expiration = null`)
+   - Users remain logged in until explicit logout
+   - Suitable for mobile and SPA applications
+   - Adjust `SANCTUM_STATEFUL_DOMAINS` for CORS compatibility
+
+5. **Role-Based Access Control**
+   - Assumption: Only two roles exist: `admin` and `student`
+   - Defined in `UserRoleEnum` with hard-coded routes
+   - Extending roles requires updates to middleware and route definitions
+
+6. **Gender & Language as Required Fields**
+   - Assumption: User gender and language preference are stored but not strictly required
+   - However, profile completion checks include these fields
+   - May be optional for MVP but important for long-term user analytics
+
+### Data Assumptions
+
+1. **Question Options Structure**
+   - Assumption: Each question can have multiple options
+   - A question must have at least one option
+   - Options are managed via `Option` model with `question_id` FK
+
+2. **Question Submissions**
+   - Assumption: Students submit answers per session (not real-time)
+   - `QuestionSubmission` captures the session; `QuestionSubmissionAnswer` captures per-question answers
+   - Each submission is immutable (no editing after submission)
+
+3. **Soft Deletes**
+   - Assumption: Users have soft delete capability (`deleted_at` timestamp)
+   - Deleted users remain in database for audit trails
+   - Questions likely use soft deletes for archival
+
+4. **Timestamps**
+   - Assumption: All models have `created_at` and `updated_at`
+   - Automatically managed by Eloquent
+
+### Infrastructure Assumptions
+
+1. **MySQL 8.0 Features**
+   - Assumption: Database uses MySQL 8.0+ (native JSON, full-text search, etc.)
+   - No legacy database compatibility required
+
+2. **Redis for Caching**
+   - Assumption: Redis is available and configured as cache/session driver
+   - Enables quick performance for high-traffic scenarios
+   - Can fallback to file-based caching if Redis unavailable (not recommended for production)
+
+3. **Mailpit for Development**
+   - Assumption: Development uses Mailpit (SMTP on port 1025)
+   - All emails can be intercepted and viewed via http://localhost:8025
+   - Production must configure real SMTP service
+
+4. **Docker-Based Development**
+   - Assumption: All developers use Docker & Docker Compose
+   - No local PHP/Node installation required
+   - Identical environment across machines
+
+5. **Single Server Deployment**
+   - Assumption: MVP deployment targets single-server setup
+   - Load balancing, CDN, and microservices not yet implemented
+   - Suitable for teams up to ~1000 concurrent users
+
+---
+
+## ✨ Extra Improvements & Enhancements
+
+This section documents potential improvements and future enhancements for the system.
+
+### 🔄 Phase 2 Features
+
+#### 1. **Question Analytics & Reporting**
+- Track question difficulty (pass rate per question)
+- Student performance analytics dashboard
+- Question effectiveness reports (time spent, accuracy rate)
+- Batch export of results (CSV, PDF)
+
+**Implementation:**
 ```php
-// Response helpers
-success_response($data, $is_data = true, $message = 'success')
-error_response($message, $status_code = 400, $data = [])
-
-// Translation helper
-trans('key', ['param' => 'value'], 'en')
+// new: QuestionAnalytics model
+// new: /admin/analytics endpoint
+// new: AnalyticsController with aggregation queries
 ```
 
-### Custom Artisan Commands
+#### 2. **Question Categories & Tagging**
+- Organize questions into categories/topics
+- Tag system for flexible classification
+- Filter questions by category in practice mode
+- Category-based performance tracking
 
-Create custom commands for common tasks:
+**Implementation:**
+```php
+// new: Category model with hasMany(Question)
+// new: Tag model with belongsToMany(Question)
+// modified: QuestionResource to include categories/tags
+```
 
+#### 3. **Question Banking & Question Sets**
+- Create reusable question sets (exams, quizzes)
+- Time-limited question sets
+- Sequential vs. random question order
+- Partial question set completion tracking
+
+**Implementation:**
+```php
+// new: QuestionSet model
+// new: QuestionSetQuestion pivot
+// new: SetSubmission tracking
+// new: RemainingTime calculation
+```
+
+#### 4. **User Achievement System**
+- Badges for milestones (100 questions answered, perfect score, streak)
+- Leaderboards (global, category-based)
+- Experience points and levels
+- Achievement notifications
+
+**Implementation:**
+```php
+// new: Achievement model
+// new: UserAchievement pivot with unlock_date
+// new: Leaderboard routes
+// new: AchievementObserver for auto-unlock logic
+```
+
+### 🛡️ Security Enhancements
+
+#### 1. **Rate Limiting**
+- Prevent brute force attacks on login endpoint
+- Rate limit API endpoints per user/IP
+- Configurable limits per endpoint
+
+**Implementation:**
+```php
+// config/rate_limiting.php
+// Middleware: ThrottleRequests
+Route::post('login', [AuthController::class, 'login'])
+    ->middleware('throttle:5,1'); // 5 attempts per minute
+```
+
+#### 2. **Email Verification**
+- Require email confirmation before account activation
+- Resend verification email option
+- Expiring verification tokens
+
+**Implementation:**
+```php
+// add: email_verified_at to User
+// new: VerifyEmail action
+// new: ResendVerificationEmail action
+// add: VerifiedEmail middleware
+```
+
+#### 3. **Two-Factor Authentication (2FA)**
+- SMS/TOTP-based 2FA
+- Recovery codes for account recovery
+- Device trust mechanism
+
+**Implementation:**
+```php
+// new: TwoFactorAuth model
+// new: Enable/Disable 2FA actions
+// new: VerifyTwoFactor request
+// new: GenerateRecoveryCodes command
+```
+
+#### 4. **Password Reset Flow**
+- Secure token-based password resets
+- Expiring reset tokens (15 minutes)
+- Email verification for reset requests
+
+**Implementation:**
+```php
+// existing: ChangePasswordAction
+// new: RequestPasswordReset action
+// new: ResetPassword action with token validation
+```
+
+### 📊 Database & Performance
+
+#### 1. **Query Optimization**
+- Add database indexes for frequently queried columns
+- Implement query caching for static data
+- Lazy loading to eager loading conversion
+
+**Implementation:**
+```php
+// Migration: Add indexes
+Schema::table('questions', function (Blueprint $table) {
+    $table->index('published');
+    $table->index('user_id');
+    $table->index('created_at');
+});
+
+// Model: Use with() for eager loading
+Question::with('options')->paginate();
+```
+
+#### 2. **Pagination & Lazy Loading**
+- Implement cursor pagination for large datasets
+- Lazy load options when fetching questions
+- Infinite scroll support
+
+**Implementation:**
+```php
+// Controller: Cursor pagination
+$questions = Question::cursorPaginate(15);
+
+// Resource: Include relationship
+QuestionResource::collection($questions)->through(
+    fn($question) => [..., 'options' => OptionResource::collection($question->options)]
+);
+```
+
+#### 3. **Caching Strategy**
+- Cache question lists (30 min TTL)
+- Cache user statistics (5 min TTL)
+- Cache enum values (1 hour TTL)
+
+**Implementation:**
+```php
+// Helper: Cache manager
+Cache::remember('questions.published', 30 * 60, function () {
+    return Question::where('published', true)->get();
+});
+```
+
+### 🎨 Frontend Enhancements
+
+#### 1. **Advanced Form Validation**
+- Real-time field validation (debounced)
+- Cross-field validation (password confirmation)
+- Async validation (email uniqueness check)
+- Field-level error animations
+
+**Implementation:**
+```vue
+<script setup>
+import { debounce } from 'lodash';
+
+const validateEmail = debounce(async (email) => {
+    const response = await axios.post('/v1/admin/validate-email', { email });
+    form.errors.set('email', response.data.message);
+}, 500);
+</script>
+```
+
+#### 2. **Progressive Web App (PWA)**
+- Offline question browsing
+- Service worker for app shell caching
+- Install as app on mobile devices
+- Push notifications for exam reminders
+
+**Implementation:**
+```javascript
+// new: public/manifest.json
+// new: service-worker.js with caching strategy
+// new: PWA meta tags in HTML
+```
+
+#### 3. **Dark Mode Support**
+- Toggle between light/dark theme
+- Respect system preferences (prefers-color-scheme)
+- Persistent theme selection
+
+**Implementation:**
+```vue
+<script setup>
+const isDarkMode = ref(localStorage.getItem('theme') === 'dark');
+
+const toggleTheme = () => {
+    isDarkMode.value = !isDarkMode.value;
+    document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light');
+};
+</script>
+```
+
+#### 4. **Real-time Notifications**
+- WebSocket integration (Laravel Reverb)
+- Toast notifications for actions
+- Activity feed in dashboard
+- User presence indicators
+
+**Implementation:**
+```javascript
+// Broadcast::channel('questions', function (User $user) {
+//     return $user->role->value === 'admin';
+// });
+
+// Frontend:
+Echo.channel('questions').listen('QuestionCreated', (data) => {
+    notify.success('New question added: ' + data.question.title);
+});
+```
+
+### 🧪 Testing & Quality
+
+#### 1. **Comprehensive Test Suite**
+- Unit tests for Actions
+- Feature tests for API endpoints
+- Browser tests for critical flows (Vue Test Utils)
+- Test coverage target: >80%
+
+**Implementation:**
+```php
+// tests/Feature/Auth/LoginTest.php
+test('user can login with valid credentials', function () {
+    $user = User::factory()->create(['password' => 'password']);
+    $response = $this->post('/api/v1/admin/login', [
+        'email' => $user->email,
+        'password' => 'password'
+    ]);
+    
+    $response->assertStatus(200)
+        ->assertHas('data.access_token');
+});
+```
+
+#### 2. **Static Analysis & Linting**
+- PHPStan for type checking
+- Laravel Pint for code style
+- ESLint + Prettier for frontend
+- Pre-commit hooks with Husky
+
+**Implementation:**
 ```bash
-# Create command
-php artisan make:command GenerateApiDocs
-
-# Run command
-php artisan app:generate-api-docs
+# .git/hooks/pre-commit
+vendor/bin/pint
+npm run lint:fix
 ```
 
-### Best Practices
+#### 3. **Documentation Auto-generation**
+- Keep README synchronized with code
+- Generate API docs from annotations (Scribe)
+- Entity relationship diagrams
+- Architecture decision records (ADRs)
 
-1. **Always use DTOs** for data transfer between layers
-2. **Keep controllers thin** - business logic in Actions
-3. **Validate in Form Requests** - not in controllers
-4. **Use API Resources** for response transformation
-5. **Document all endpoints** with Scribe annotations
-6. **Test API endpoints** - write feature tests
-7. **Use enums** for fixed values
-8. **Implement soft deletes** where appropriate
-9. **Version your API** - currently `/api/v1/`
-10. **Follow PSR standards** for PHP code
+### 📱 Mobile & API Enhancements
+
+#### 1. **Mobile API Versioning**
+- Separate mobile API routes (/api/v2/mobile)
+- Lightweight responses optimized for mobile
+- Different pagination size (10 vs 20)
+
+#### 2. **Webhook Support**
+- Question creation/update webhooks
+- Submission result webhooks
+- Retry mechanism for failed webhooks
+- Webhook management dashboard
+
+**Implementation:**
+```php
+// new: Webhook model
+// new: WebhookLog model
+// new: trigger webhook mechanism in Actions
+```
+
+#### 3. **Export Capabilities**
+- Export questions as JSON/CSV
+- Export results as PDF/Excel
+- Bulk import questions
+- Data migration tools
+
+### 🌐 Internationalization Improvements
+
+#### 1. **More Languages**
+- Spanish, French, Hindi, etc.
+- RTL language support (Arabic, Urdu)
+- Pluralization rules per language
+- Currency formatting per locale
+
+#### 2. **Translation Management**
+- Translation management dashboard (admin)
+- Missing translation tracker
+- Community translation workflow
 
 ---
 
-## 🤝 Contributing
+## 🔍 Code Quality & Standards
 
-1. Follow existing code structure and patterns
-2. Write descriptive commit messages
-3. Update documentation for new features
-4. Add Scribe annotations for new endpoints
-5. Test thoroughly before committing
-6. Keep Docker services updated
+### PSR-4 Compliance
+
+✅ **Status:** Fully Compliant
+
+The codebase follows PSR-4 (Autoloading) standards:
+
+```
+namespace App\Http\Controllers\Api\Admin;
+class QuestionController extends Controller { }
+
+File location: app/Http/Controllers/Api/Admin/QuestionController.php
+```
+
+**Verification:**
+```bash
+docker compose exec app composer validate
+```
+
+### Code Organization
+
+```
+app/
+├── Actions/              # Business logic (one action per operation)
+├── DataTransferObjects/  # Data containers (type-safe, immutable)
+├── Enums/               # Type-safe enumerations
+├── Http/
+│   ├── Controllers/     # Request handlers (thin, delegate to Actions)
+│   ├── Middleware/      # Request/response manipulation
+│   ├── Requests/        # Input validation
+│   └── Resources/       # Response transformation
+├── Models/              # Eloquent models (data access)
+├── Observers/           # Model event listeners
+├── Policies/            # Authorization logic
+├── Traits/              # Reusable functionality
+└── Providers/           # Service container registration
+```
+
+### Naming Conventions
+
+| Element | Convention | Example |
+|---------|-----------|---------|
+| Class | PascalCase | `UserController`, `CreateQuestionAction` |
+| Method | camelCase | `getUserById()`, `validateEmail()` |
+| Constant | UPPER_SNAKE | `DEFAULT_PAGINATION_SIZE` |
+| Variable | camelCase | `$userId`, `$questionCount` |
+| Database Column | snake_case | `full_name`, `created_at` |
+| Database Table | snake_case plural | `questions`, `user_submissions` |
+| Enum | PascalCase | `UserRoleEnum`, `AppLanguageEnum` |
+| Trait | PascalCase ending with 'able' | `UploadAble`, `TranslatAble` |
+
+### Code Standards Enforced
+
+1. **No Unused Imports**
+   - Removed: `FirebaseNotifiable` trait (doesn't exist)
+   - Removed: Unused voice-related attributes
+   - Removed: `getUserByEmail()` static method (use Eloquent instead)
+
+2. **Commented Code Cleanup**
+   - Removed: Commented-out attribute assignments
+   - Removed: Commented validation rules
+   - Kept: Intentional comments explaining non-obvious logic
+
+3. **Type Hints**
+   - All method parameters typed
+   - All return types specified
+   - Use union types where appropriate: `string|UserRoleEnum`
+
+4. **Consistency**
+   - Single source of truth for helpers
+   - Helper functions centralized in `app/Helpers/`
+   - Configuration centralized in `config/` directory
+
+### Files Modified for Code Quality
+
+1. **app/Models/User.php**
+   - Removed unused `FirebaseNotifiable` import
+   - Removed unused voice-related methods
+   - Removed unused `getUserByEmail()` helper
+   - Cleaned up commented code blocks
 
 ---
 
-## 📞 Support & Resources
-
-- **Laravel Documentation:** https://laravel.com/docs
-- **Vue 3 Documentation:** https://vuejs.org/guide
-- **Scribe Documentation:** https://scribe.knuckles.wtf
-- **Docker Documentation:** https://docs.docker.com
-- **Tailwind CSS:** https://tailwindcss.com/docs
-
----
-
-**Last Updated:** December 9, 2025  
-**Version:** 1.0.0  
+**Last Updated:** January 2, 2026  
+**Version:** 1.1.0  
 **Maintainer:** Development Team

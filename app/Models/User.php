@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Builders\UserBuilder;
 use App\Enums\UserGenderEnum;
 use App\Enums\UserRoleEnum;
-use App\Traits\FirebaseNotifiable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -49,13 +48,13 @@ class User extends Authenticatable
     {
         static::creating(function ($user) {
             if ($user->isProfileSetupCompleted()) {
-                // $user->profile_setup_completed = true;
+                // Profile setup validation on create
             }
         });
 
         static::updating(function ($user) {
             if ($user->isProfileSetupCompleted()) {
-                // $user->profile_setup_completed = true;
+                // Profile setup validation on update
             }
         });
     }
@@ -77,7 +76,7 @@ class User extends Authenticatable
         return $this->role === $value;
     }
 
-    protected $appends = ['avatar_url', 'voice_url', 'voice_cover_image_url', 'voice_description', 'cloned_voice_url'];
+    protected $appends = ['avatar_url'];
 
     public function getAvatarUrlAttribute()
     {
@@ -96,50 +95,6 @@ class User extends Authenticatable
         return Storage::disk(config('filesystems.default'))->url($this->avatar);
     }
 
-    public function getVoiceUrlAttribute()
-    {
-        if (is_null($this->voice)) {
-            return null;
-        }
-
-        if (preg_match('@http@', $this->voice)) {
-            return $this->voice;
-        }
-
-        if (config('filesystems.default') == 'exoscale') {
-            return Storage::disk('exoscale')->publicUrl($this->voice);
-        }
-
-        return Storage::disk(config('filesystems.default'))->url($this->voice);
-    }
-
-    public function getClonedVoiceUrlAttribute()
-    {
-        if (is_null($this->cloned_voice)) {
-            return null;
-        }
-
-        if (preg_match('@http@', $this->cloned_voice)) {
-            return $this->cloned_voice;
-        }
-
-        if (config('filesystems.default') == 'exoscale') {
-            return Storage::disk('exoscale')->publicUrl($this->cloned_voice);
-        }
-
-        return Storage::disk(config('filesystems.default'))->url($this->cloned_voice);
-    }
-
-    public function voiceDescription(): Attribute
-    {
-        return Attribute::get(fn() => 'Own Voice');
-    }
-
-    public function voiceCoverImageUrl(): Attribute
-    {
-        return Attribute::get(fn() => asset('images/background_cover_image.png'));
-    }
-
     public function createdBy()
     {
         return $this->belongsTo(self::class, 'created_by');
@@ -155,12 +110,6 @@ class User extends Authenticatable
         return filled($this->gender)
             && filled($this->date_of_birth)
             && filled($this->full_name);
-            // && UserProfileQuestionSubmission::where('user_id', $this->id)->exists();
-
-        // && filled($this->voice)
-        // && filled($this->voice_text);
-
-        // && filled($this->cloned_voice) // Removed cloned voice as a requirement for profile setup completion
     }
 
 }
